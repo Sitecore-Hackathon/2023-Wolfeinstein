@@ -30,7 +30,7 @@ Module Purpose
 - Sitecore Experience Accelerator 10.3.0 rev. 00074
 - Sitecore ExperienceEdge Connector for Sitecore 10.3.0 XM 21.0.0 rev. 0164
 - Sitecore Headless Services Server XM 21.0.583
-- Node Js 16.16.0
+- Node Js 16.16.0 or greater
 - Package sitecore-jss/sitecore-jss-cli
 
 ## Installation instructions
@@ -41,7 +41,7 @@ Module Purpose
    - Sitecore ExperienceEdge Connector for Sitecore 10.3.0 XM 21.0.0 rev. 0164
    - Sitecore Headless Services Server XM 21.0.583
 3. Use the Sitecore installation wizard to install this [package](docs/files/Hackathon-2023-1.0.zip)
-4. Install Node Js 16.16.0
+4. Install Node Js 16.16.0 or greater
 5. Install sitecore jss cli using the command
    ```
    npm install -g @sitecore-jss/sitecore-jss-cli
