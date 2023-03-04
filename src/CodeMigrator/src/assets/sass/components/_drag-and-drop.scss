@@ -1,0 +1,15 @@
+.drag-and-drop__section {
+  margin-block: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.drop_area {
+  max-width: inherit !important;
+}
+
+.editor__container {
+  border: 1px solid gray;
+}
+

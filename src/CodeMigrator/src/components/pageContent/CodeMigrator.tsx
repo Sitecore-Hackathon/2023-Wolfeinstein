@@ -1,5 +1,7 @@
-import { Text, RichText, Field, withDatasourceCheck } from '@sitecore-jss/sitecore-jss-nextjs';
+import { Field, RichText, Text, withDatasourceCheck } from '@sitecore-jss/sitecore-jss-nextjs';
+
 import { ComponentProps } from 'lib/component-props';
+import DragAndDrop from 'components/DragAndDrop';
 
 type CodeMigratorProps = ComponentProps & {
   fields: {
@@ -9,11 +11,13 @@ type CodeMigratorProps = ComponentProps & {
 };
 
 const CodeMigrator = ({ fields }: CodeMigratorProps): JSX.Element => (
-  <div className="test">
-    <div><span>Hi</span></div>
+  <>
     <Text tag="h2" className="contentTitle" field={fields.heading} />
     <RichText className="contentDescription" field={fields.copy} />
-  </div>
+    <div className="drag-and-drop__section">
+      <DragAndDrop />
+    </div>
+  </>
 );
 
 export default withDatasourceCheck()<CodeMigratorProps>(CodeMigrator);
