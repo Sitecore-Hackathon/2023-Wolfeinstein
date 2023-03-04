@@ -1,7 +1,7 @@
 import { Field, withDatasourceCheck } from '@sitecore-jss/sitecore-jss-nextjs';
 
-import { ComponentProps } from 'lib/component-props';
 import DragAndDrop from 'components/DragAndDrop';
+import { ComponentProps } from 'lib/component-props';
 
 type CodeMigratorProps = ComponentProps & {
   fields: {

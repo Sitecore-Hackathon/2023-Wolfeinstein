@@ -78,11 +78,11 @@ const apiCall = async (options: AxiosRequestConfig, className: string): Promise<
 
     let prompt = prompts[3].replace('CODEHERE', responseData);
     // in the className replace "Model" with "Props"
-    const classNameProps = className.replace('Model', 'Props').replace('\n', ' ');
+    const classNameProps = className.replace('Model', 'Props').replace('\n', '');
 
     prompt = prompt.replace('MODELNAME', classNameProps);
 
-    const classNameModel = className.replace('Model', '').replace('\n', ' ');
+    const classNameModel = className.replace('Model', '').replace('\n', '');
 
     prompt = prompt.replace('TYPENAME', classNameModel);
 
@@ -105,14 +105,15 @@ const apiCall = async (options: AxiosRequestConfig, className: string): Promise<
     // find the "export default" and replace it with "export default Comp.withDatasourceCheck()<AlertLabelsModel>(AlertLabels)"
     responseData = responseData.replace(
       /export default/g,
-      'export default Comp.withDatasourceCheck()<AlertLabelsModel>(AlertLabels)'
+      // `export default Comp.withDatasourceCheck()<${classNameProps.replace("\n", "")}>(${classNameModel.replace("\n", "")})`
+      "export default Comp.withDatasourceCheck()<" + classNameProps.replace("\r", "").replace("\n", "").replace("\r", "") + ">(" + classNameModel.replace("\r", "").replace("\n", "").replace("\r", "") + ")"
     );
 
     // find "=>" and replace it with ": JSX.Element =>"
     responseData = responseData.replace(/=>/g, ': JSX.Element =>');
 
-    // find ": React.FC" and replace it with " "
-    responseData = responseData.replace(/: React.FC<AlertLabelsModel>/g, ' ');
+    // find ": React.FC<${classNameModel}>" and replace it with "JSX.Element"
+    responseData = responseData.replace(/: React.FC<.*>/g, '= (): JSX.Element');
 
     return responseData;
   } catch (error) {
