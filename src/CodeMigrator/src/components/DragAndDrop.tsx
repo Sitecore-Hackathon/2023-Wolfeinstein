@@ -62,7 +62,7 @@ function DragAndDrop(): JSX.Element {
       formData.append('files', file);
     });
 
-    fetch('/api/test', {
+    fetch('/api/process', {
       method: 'POST',
       body: formData,
     })
