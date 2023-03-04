@@ -10,17 +10,16 @@ import Image from 'next/image';
 const fileTypes = ['cs'];
 
 interface ApiResponse {
-  files: Array<{ fileName: string; tsxCode: string; csCode: string }>;
+  files: Array<{ fileName: string; tsxCode: string; csCode: string; loading?: boolean }>;
 }
 interface ApiTextResponse {
   newCode: string;
 }
 
 function DragAndDrop(): JSX.Element {
-  const [files, setFiles] = useState<Array<{ fileName: string; tsxCode: string; csCode: string }>>(
-    []
-  );
-  const [loading, setLoading] = useState<boolean>(false);
+  const [files, setFiles] = useState<
+    Array<{ fileName: string; tsxCode: string; csCode: string; loading?: boolean }>
+  >([]);
 
   const handleChange = (files: FileList) => {
     sendFile(files);
@@ -61,7 +60,6 @@ function DragAndDrop(): JSX.Element {
       formData.append('files', file);
     });
 
-    setLoading(true);
     fetch('/api/test', {
       method: 'POST',
       body: formData,
@@ -75,14 +73,21 @@ function DragAndDrop(): JSX.Element {
       })
       .catch((error) => {
         console.error('Error uploading file:', error);
-      })
-      .finally(() => {
-        setLoading(false);
       });
   };
 
   const handleReprocess = (code: string, fileName: string) => {
-    setLoading(true);
+    const updatedFiles = files.map((file) => {
+      if (file.fileName === fileName) {
+        return {
+          ...file,
+          loading: true,
+        };
+      }
+      return file;
+    });
+    setFiles(updatedFiles);
+
     fetch('/api/reprocess', {
       method: 'POST',
       body: code,
@@ -93,16 +98,17 @@ function DragAndDrop(): JSX.Element {
       .then((response: ApiTextResponse) => {
         console.log('File uploaded successfully', files);
         //find the file with the same name and replace the code
-        const newFiles = files.map((file) => {
+        const newFiles = updatedFiles.map((file) => {
           if (file.fileName === fileName) {
-            return { fileName: file.fileName, tsxCode: response.newCode, csCode: file.csCode };
+            return {
+              ...file,
+              tsxCode: response.newCode,
+              loading: false,
+            };
           }
           return file;
         });
         setFiles(newFiles);
-      })
-      .finally(() => {
-        setLoading(false);
       });
   };
 
@@ -139,7 +145,7 @@ function DragAndDrop(): JSX.Element {
                   />
                 </div>
                 <div className="reprocess__container">
-                  {loading ? (
+                  {file.loading ? (
                     <span className="loader"></span>
                   ) : (
                     <button onClick={() => handleReprocess(file.csCode, file.fileName)}>
@@ -150,7 +156,7 @@ function DragAndDrop(): JSX.Element {
                 <div className="editor">
                   <div className="title__container">
                     <h3>{file.fileName}.tsx</h3>
-                    {loading ? (
+                    {file.loading ? (
                       <span className="loader"></span>
                     ) : (
                       <div className="buttons__container">
