@@ -10,83 +10,117 @@ const prompts = {
     CODEHERE`,
 };
 
-const url = 'https://verndale-aigateway.azurewebsites.net/GenerateComplexContent';
-
 export default async function handlePrompts(csCode: string): Promise<string> {
   const data = await firstCall(csCode);
   return data;
 }
 
 const firstCall = async (csCode: string): Promise<string> => {
-  let className = '';
+  let className;
 
-  try {
-    const classNamePrompt = prompts[1].replace('CODEHERE', csCode);
-    const classNameBase64 = Buffer.from(classNamePrompt).toString('base64');
-    const classNameOptions: AxiosRequestConfig = {
-      method: 'POST',
-      url,
-      data: {
-        prompt: classNameBase64,
-      },
-    };
-    const classNameResponse = await axios.request(classNameOptions);
-    className = classNameResponse.data;
-  } catch (error) {
-    console.error(error);
-    throw new Error('An error occurred while calling the API');
-  }
+  const classNamePrompt = prompts[1].replace('CODEHERE', csCode);
 
-  const prompt = prompts[2].replace('CODEHERE', csCode);
-  const base64 = Buffer.from(prompt).toString('base64');
-  const options: AxiosRequestConfig = {
+  const classNameBase64 = Buffer.from(classNamePrompt).toString('base64');
+
+  const classNameOptions: AxiosRequestConfig = {
     method: 'POST',
-    url,
+    url: 'https://verndale-aigateway.azurewebsites.net/GenerateComplexContent',
     data: {
-      prompt: base64,
+      prompt: classNameBase64,
     },
   };
-  const data = await apiCall(options, className);
+
+  let data = '';
+
+  try {
+    const response = await axios.request(classNameOptions);
+    className = response.data;
+
+    // take the value from prompts[1] and, where it says CODEHERE, replace it with the "csCode" variable
+    const prompt = prompts[2].replace('CODEHERE', csCode);
+
+    const base64 = Buffer.from(prompt).toString('base64');
+
+    // generate axios options for the request with body
+    const options: AxiosRequestConfig = {
+      method: 'POST',
+      url: 'https://verndale-aigateway.azurewebsites.net/GenerateComplexContent',
+      data: {
+        prompt: base64,
+      },
+    };
+
+    // call the apiCall function and pass in the url variable
+    data = await apiCall(options, className);
+  } catch (error) {
+    console.log(error);
+  }
+
   return data;
 };
 
 const apiCall = async (options: AxiosRequestConfig, className: string): Promise<string> => {
   try {
+    let responseData = '';
+
     const response = await axios.request(options);
+    responseData = response.data;
 
-    const responseData = `import * as Comp from '@sitecore-jss/sitecore-jss-nextjs';
-import { ComponentProps } from 'lib/component-props';
+    const imports = `import * as Comp from '@sitecore-jss/sitecore-jss-nextjs';\nimport { ComponentProps } from 'lib/component-props';`;
 
-${response.data}
-      `
-      .replace(/type.*model/g, 'Props')
-      .replace(/=/g, '= ComponentProps &')
-      .replace(
-        /export default/g,
-        `export default Comp.withDatasourceCheck()<${className.replace(
-          /Model\n/g,
-          'Props'
-        )}>(${className.replace(/Model\n/g, '')})`
-      )
-      .replace(/=>/g, ': JSX.Element =>')
-      .replace(/: React.FC<.*>/g, '= (): JSX.Element');
+    // concatenate at the beggining of the response data the imports variable
+    responseData = imports + responseData;
 
-    const base64 = Buffer.from(
-      prompts[3]
-        .replace('CODEHERE', responseData)
-        .replace('MODELNAME', className.replace(/Model\n/g, 'Props'))
-        .replace('TYPENAME', className.replace(/Model\n/g, ''))
-    ).toString('base64');
+    // take the line that starts with "type", the word after that has the word model in it, replace it with "Props"
+    responseData = responseData.replace(/type.*model/g, 'Props');
 
+    // take the line that starts with "type", replace the "=" with "= ComponentProps &"
+    responseData = responseData.replace(/=/g, '= ComponentProps &');
+
+    let prompt = prompts[3].replace('CODEHERE', responseData);
+    // in the className replace "Model" with "Props"
+    const classNameProps = className.replace('Model', 'Props').replace('\n', '');
+
+    prompt = prompt.replace('MODELNAME', classNameProps);
+
+    const classNameModel = className.replace('Model', '').replace('\n', '');
+
+    prompt = prompt.replace('TYPENAME', classNameModel);
+
+    // transform prompt to base64
+    const base64 = Buffer.from(prompt).toString('base64');
+
+    // generate axios options for the request with body
     const requestOptions: AxiosRequestConfig = {
       method: 'POST',
-      url,
-      data: { prompt: base64 },
+      url: 'https://verndale-aigateway.azurewebsites.net/GenerateComplexContent',
+      data: {
+        prompt: base64,
+      },
     };
 
     const response2 = await axios.request(requestOptions);
+    // take the responseData variable from above and concatenate it at the beggining of the response data
+    responseData = responseData + response2.data;
 
-    return responseData + response2.data;
+    // find the "export default" and replace it with "export default Comp.withDatasourceCheck()<AlertLabelsModel>(AlertLabels)"
+    responseData = responseData.replace(
+      /export default/g,
+      // `export default Comp.withDatasourceCheck()<${classNameProps.replace("\n", "")}>(${classNameModel.replace("\n", "")})`
+      'export default Comp.withDatasourceCheck()<' +
+        classNameProps.replace('\r', '').replace('\n', '').replace('\r', '') +
+        '>(' +
+        classNameModel.replace('\r', '').replace('\n', '').replace('\r', '') +
+        ')'
+    );
+
+    // find "=>" and replace it with ": JSX.Element =>"
+    responseData = responseData.replace(/=>/g, ': JSX.Element =>');
+
+    // find ": React.FC<${classNameModel}>" and replace it with "JSX.Element"
+    responseData = responseData.replace(/: React.FC<.*>/g, '= (): JSX.Element');
+
+    return responseData;
   } catch (error) {
     console.error(error);
     throw new Error('An error occurred while calling the API');
