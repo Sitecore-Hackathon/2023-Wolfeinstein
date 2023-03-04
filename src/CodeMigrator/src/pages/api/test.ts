@@ -1,10 +1,10 @@
 /* eslint-disable prettier/prettier */
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
-import type { NextApiRequest, NextApiResponse } from 'next';
+import axios, { AxiosRequestConfig } from 'axios';
 import formidable from 'formidable';
 import fs from 'fs';
-import axios, { AxiosRequestConfig } from 'axios';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 type Data = {
   files: {
@@ -15,13 +15,19 @@ type Data = {
 };
 
 export const config = {
-  api:{
+  api: {
     bodyParser: false,
   }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>): Promise<void> {
+
+  let answer: Data = {
+    files: []
+  }
   try {
+
+
     const formData = await new Promise((resolve, reject) => {
       const form = formidable({ multiples: true })
 
@@ -36,40 +42,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (Array.isArray(filesData)) {
       filesData.forEach((file) => {
         const path = file['filepath'];
+        const originalFileName = file['originalFileame'];
         const rawData = fs.readFileSync(path);
-        console.log(rawData.toString());
-        return rawData.toString();
+        // console.log(rawData.toString());
+        const originalCode = rawData.toString();
+        const componentCode = handlePrompts(originalCode);
+        // return rawData.toString();
+        answer.files.push({
+          fileName: originalFileName,
+          tsxCode: componentCode,
+          csCode: originalCode,
+        })
+        console.log(answer);
       });
     } else {
       const path = filesData['filepath'];
+      const originalFileName = filesData['originalFileame'];
       const rawData = fs.readFileSync(path);
-      console.log(rawData.toString());
+      // console.log(rawData.toString());
+      const originalCode = rawData.toString();
+      const componentCode = handlePrompts(originalCode);
+      // return rawData.toString();
+      answer.files.push({
+        fileName: originalFileName,
+        tsxCode: componentCode,
+        csCode: originalCode,
+      })
+      console.log(answer);
     }
 
   } catch (e) {
-    res.status(400).send({ files: [] });
+    res.status(400).send(answer);
     return;
   }
 
-  return res.status(200).json({
-    files: [
-      {
-        fileName: 'test',
-        tsxCode: `import React, { useState, useEffect, useRef } from "react";
-          `,
-        csCode: 'using System;',
-      },
-      {
-        fileName: 'test 2',
-        tsxCode: `import React, { useState, useEffect, useRef } from "react";
-          `,
-        csCode: 'using System;',
-      },
-    ],
-  });
+  return res.status(200).json(answer);
 }
 
-const handlePrompts = (csCode: string) => {
+const handlePrompts = (csCode: string): string => {
 
   const prompts = {
     "1": "Given the next C# code return the class name. CODEHERE",
@@ -79,9 +89,9 @@ const handlePrompts = (csCode: string) => {
     CODEHERE`,
   }
 
-  const apiCall = (options: AxiosRequestConfig, className: string) => {
+  const apiCall = (options: AxiosRequestConfig, className: string): string => {
 
-    let responseData: string;
+    let responseData: string = ""
 
     axios.request(options)
       .then((response) => {
@@ -138,7 +148,7 @@ const handlePrompts = (csCode: string) => {
 
             console.log(responseData);
 
-            return responseData;
+
 
           }
           )
@@ -155,11 +165,11 @@ const handlePrompts = (csCode: string) => {
       }
       )
 
-
+    return responseData;
 
   }
 
-  const firstCall = () => {
+  const firstCall = (): string => {
 
     let className;
 
@@ -175,6 +185,8 @@ const handlePrompts = (csCode: string) => {
       }
     };
 
+    let data: string = ""
+
     axios.request(classNameOptions)
       .then((response) => {
         className = response.data;
@@ -186,7 +198,7 @@ const handlePrompts = (csCode: string) => {
         const base64 = Buffer.from(prompt).toString('base64');
 
         // generate axios options for the request with body 
-        const options = {
+        const options: AxiosRequestConfig = {
           method: 'POST',
           url: 'https://verndale-aigateway.azurewebsites.net/GenerateComplexContent',
           data: {
@@ -195,9 +207,8 @@ const handlePrompts = (csCode: string) => {
         };
 
         // call the apiCall function and pass in the url variable
-        const data = apiCall(options, className);
+        data = apiCall(options, className);
 
-        return data;
       }
       )
       .catch((error) => {
@@ -205,5 +216,11 @@ const handlePrompts = (csCode: string) => {
       }
       )
 
+    return data
+
   }
+
+  const data = firstCall();
+  return data;
+
 }
