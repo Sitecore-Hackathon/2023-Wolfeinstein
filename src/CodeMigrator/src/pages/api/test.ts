@@ -2,10 +2,8 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 
 import type { NextApiRequest, NextApiResponse } from 'next';
-
 import formidable from 'formidable';
 import fs from 'fs';
-
 import axios, { AxiosRequestConfig } from 'axios';
 
 type Data = {
@@ -16,160 +14,54 @@ type Data = {
   }[];
 };
 
-interface FormDataType {
-  err?: Error;
-  fields: formidable.Fields;
-  files: formidable.Files;
+export const config = {
+  api:{
+    bodyParser: false,
+  }
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse<Data>): void {
-  const dataPromise: Promise<void> = new Promise((resolve, reject) => {
-    const form = formidable({ multiples: true });
+export default async function handler(req: NextApiRequest, res: NextApiResponse<Data>): Promise<void> {
+  try {
+    const formData = await new Promise((resolve, reject) => {
+      const form = formidable({ multiples: true })
 
-    form.parse(req, (err, fields, files) => {
-      if (err) reject({ err });
-      resolve({ err, fields, files });
-    });
-  })
+      form.parse(req, (err, fields, files) => {
+        if (err) reject({ err })
+        resolve({ err, fields, files })
+      })
+    })
 
-  dataPromise.then((formData) => {
     console.log('formData', formData);
-
     const filesData = formData['files']['files'];
     if (Array.isArray(filesData)) {
       filesData.forEach((file) => {
         const path = file['filepath'];
         const rawData = fs.readFileSync(path);
         console.log(rawData.toString());
+        return rawData.toString();
       });
     } else {
       const path = filesData['filepath'];
       const rawData = fs.readFileSync(path);
       console.log(rawData.toString());
     }
-  }).catch((err) => console.log(err));
 
-
-  // console.log('formData', formData);
-
-  // const filesData = formData['files']['files'];
-  // if (Array.isArray(filesData)) {
-  //   filesData.forEach((file) => {
-  //     const path = file['filepath'];
-  //     const rawData = fs.readFileSync(path);
-  //     console.log(rawData.toString());
-  //   });
-  // } else {
-  //   const path = filesData['filepath'];
-  //   const rawData = fs.readFileSync(path);
-  //   console.log(rawData.toString());
-  // }
+  } catch (e) {
+    res.status(400).send({ files: [] });
+    return;
+  }
 
   return res.status(200).json({
     files: [
       {
         fileName: 'test',
         tsxCode: `import React, { useState, useEffect, useRef } from "react";
-
-          import Editor from "@monaco-editor/react";
-          import files from "./files";
-
-          function App() {
-            const editorRef = useRef(null);
-            const [fileName, setFileName] = useState("script.js");
-
-            const file = files[fileName];
-
-            useEffect(() => {
-              editorRef.current?.focus();
-            }, [file.name]);
-
-            return (
-              <>
-                <button
-                  disabled={fileName === "script.js"}
-                  onClick={() => setFileName("script.js")}
-                >
-                  script.js
-                </button>
-                <button
-                  disabled={fileName === "style.css"}
-                  onClick={() => setFileName("style.css")}
-                >
-                  style.css
-                </button>
-                <button
-                  disabled={fileName === "index.html"}
-                  onClick={() => setFileName("index.html")}
-                >
-                  index.html
-                </button>
-                <Editor
-                  height="80vh"
-                  theme="vs-dark"
-                  path={file.name}
-                  defaultLanguage={file.language}
-                  defaultValue={file.value}
-                  onMount={(editor) => (editorRef.current = editor)}
-                />
-              </>
-            );
-          }
-
-          export default App;
           `,
         csCode: 'using System;',
       },
       {
         fileName: 'test 2',
         tsxCode: `import React, { useState, useEffect, useRef } from "react";
-
-          import Editor from "@monaco-editor/react";
-          import files from "./files";
-
-          function App() {
-            const editorRef = useRef(null);
-            const [fileName, setFileName] = useState("script.js");
-
-            const file = files[fileName];
-
-            useEffect(() => {
-              editorRef.current?.focus();
-            }, [file.name]);
-
-            return (
-              <>
-                <button
-                  disabled={fileName === "script.js"}
-                  onClick={() => setFileName("script.js")}
-                >
-                  script.js
-                </button>
-                <button
-                  disabled={fileName === "style.css"}
-                  onClick={() => setFileName("style.css")}
-                >
-                  style.css
-                </button>
-                <button
-                  disabled={fileName === "index.html"}
-                  onClick={() => setFileName("index.html")}
-                >
-                  index.html
-                </button>
-                <Editor
-                  height="80vh"
-                  theme="vs-dark"
-                  path={file.name}
-                  defaultLanguage={file.language}
-                  defaultValue={file.value}
-                  onMount={(editor) => (editorRef.current = editor)}
-                />
-              </>
-            );
-          }
-
-          export default App;
           `,
         csCode: 'using System;',
       },
@@ -177,24 +69,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
   });
 }
 
-const handlePrompts = () => {
-  const csCode = `
-using System.Web;
-
-namespace Feature.Alerts.Models
-{
-    public class AlertLabelsModel : BaseModel
-    {
-        public string Heading { get; set; }
-
-        public string Description { get; set; }
-
-        public AlertLevelModel Level { get; set; }
-    }
-}
-`;
-
-
+const handlePrompts = (csCode: string) => {
 
   const prompts = {
     "1": "Given the next C# code return the class name. CODEHERE",
@@ -204,8 +79,7 @@ namespace Feature.Alerts.Models
     CODEHERE`,
   }
 
-
-  const apiCall = (options: object, className: string) => {
+  const apiCall = (options: AxiosRequestConfig, className: string) => {
 
     let responseData: string;
 
@@ -227,11 +101,11 @@ namespace Feature.Alerts.Models
 
         let prompt = prompts[3].replace("CODEHERE", responseData);
         // in the className replace "Model" with "Props"
-        let classNameProps = className.replace("Model", "Props").replace("\n", " ");
+        const classNameProps = className.replace("Model", "Props").replace("\n", " ");
 
         prompt = prompt.replace("MODELNAME", classNameProps)
 
-        let classNameModel = className.replace("Model", "").replace("\n", " ")
+        const classNameModel = className.replace("Model", "").replace("\n", " ")
 
         prompt = prompt.replace("TYPENAME", classNameModel)
         console.log(prompt)
@@ -333,5 +207,3 @@ namespace Feature.Alerts.Models
 
   }
 }
-
-
