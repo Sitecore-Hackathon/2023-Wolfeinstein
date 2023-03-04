@@ -92,6 +92,6 @@ Or download the file as a tsx so you can import it to your NextJS project.
 
 ![1677961357398](image/README/1677961357398.png)
 
-Comments
+## Comments
 
 The component created uses chat gpt behind the scenes but we also parse part of the responses to have a better migration result.
