@@ -1,4 +1,5 @@
 /* eslint-disable prettier/prettier */
+
 import React, { useState } from 'react';
 
 import { AiOutlineCopy } from 'react-icons/ai';
@@ -137,7 +138,7 @@ function DragAndDrop(): JSX.Element {
             <div key={index}>
               <div className="editor__container">
                 <div className="editor">
-                  <h3>{file.fileName}.cs</h3>
+                  <h3>{file.fileName}</h3>
                   <Editor
                     height="300px"
                     defaultLanguage="typescript"
@@ -159,7 +160,7 @@ function DragAndDrop(): JSX.Element {
                 </div>
                 <div className="editor">
                   <div className="title__container">
-                    <h3>{file.fileName}.tsx</h3>
+                    <h3>{file.fileName.replace('.cs', '.tsx')}</h3>
                     {file.loading ? (
                       <span className="loader"></span>
                     ) : (
@@ -200,4 +201,3 @@ function DragAndDrop(): JSX.Element {
 }
 
 export default DragAndDrop;
-
