@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 
 import { AiOutlineCopy } from 'react-icons/ai';
 import Editor from '@monaco-editor/react';
+import { FaChevronRight } from 'react-icons/fa';
 import { FileUploader } from 'react-drag-drop-files';
 import { GrDocumentDownload } from 'react-icons/gr';
 import Image from 'next/image';
@@ -148,8 +149,11 @@ function DragAndDrop(): JSX.Element {
                   {file.loading ? (
                     <span className="loader"></span>
                   ) : (
-                    <button onClick={() => handleReprocess(file.csCode, file.fileName)}>
-                      Update
+                    <button
+                      onClick={() => handleReprocess(file.csCode, file.fileName)}
+                      className="btn--update"
+                    >
+                      Update <FaChevronRight />
                     </button>
                   )}
                 </div>
