@@ -1,0 +1,9 @@
+{
+  "sitecore": {
+    "instancePath": "C:\\inetpub\\wwwroot\\sc-hack-2023cm.dev.local",
+    "apiKey": "{5DE9CE7F-260B-4865-9D2D-C5F4A84A7DE3}",
+    "deploySecret": "fwcot92r92ckgrzf1rs2ubisf05kwz1gwf3fjl57zk",
+    "deployUrl": "https://sc-hack-2023cm.dev.local/sitecore/api/jss/import",
+    "layoutServiceHost": "https://sc-hack-2023cm.dev.local/"
+  }
+}
