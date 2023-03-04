@@ -22,7 +22,7 @@ Module Purpose
 
 ## Video link
 
-⟹ [Replace this Video link](#video-link)
+[https://loom.com/share/43d1d386c2e241319fd07d9264d058c8]()
 
 ## Pre-requisites and Dependencies
 
