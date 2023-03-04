@@ -43,7 +43,8 @@
     "next-localization": "^0.12.0",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-drag-drop-files": "^2.3.9"
+    "react-drag-drop-files": "^2.3.9",
+    "react-icons": "^4.8.0"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.19.1",
@@ -94,4 +95,3 @@
     "start:watch-components": "ts-node --project tsconfig.scripts.json scripts/generate-component-factory.ts --watch"
   }
 }
-
