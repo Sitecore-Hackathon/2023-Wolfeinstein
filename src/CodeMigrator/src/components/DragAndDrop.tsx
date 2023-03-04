@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
 import { AiOutlineCopy } from 'react-icons/ai';
 import Editor from '@monaco-editor/react';
@@ -19,6 +19,7 @@ interface ApiTextResponse {
 }
 
 function DragAndDrop(): JSX.Element {
+  const [loading, setLoading] = useState<boolean>(false);
   const [files, setFiles] = useState<
     Array<{ fileName: string; tsxCode: string; csCode: string; loading?: boolean }>
   >([]);
@@ -49,7 +50,6 @@ function DragAndDrop(): JSX.Element {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      console.log('Text copied to clipboard');
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -61,7 +61,7 @@ function DragAndDrop(): JSX.Element {
     Array.from(files).forEach((file) => {
       formData.append('files', file);
     });
-
+    setLoading(true);
     fetch('/api/process', {
       method: 'POST',
       body: formData,
@@ -70,11 +70,13 @@ function DragAndDrop(): JSX.Element {
         return response.json();
       })
       .then((response: ApiResponse) => {
-        console.log('File uploaded successfully', response);
         setFiles(response.files);
       })
       .catch((error) => {
         console.error('Error uploading file:', error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -98,7 +100,6 @@ function DragAndDrop(): JSX.Element {
         return response.json();
       })
       .then((response: ApiTextResponse) => {
-        console.log('File uploaded successfully', files);
         //find the file with the same name and replace the code
         const newFiles = updatedFiles.map((file) => {
           if (file.fileName === fileName) {
@@ -131,70 +132,90 @@ function DragAndDrop(): JSX.Element {
           classes={'drop_area'}
         />
         <br />
+
+        {loading && (
+          <div className="loader__container">
+            <span className="loader"></span>
+          </div>
+        )}
+
         {files.length > 0 && <h2>Your files</h2>}
 
         {files &&
-          files.map((file, index) => (
-            <div key={index}>
-              <div className="editor__container">
-                <div className="editor">
-                  <h3>{file.fileName}</h3>
-                  <Editor
-                    height="300px"
-                    defaultLanguage="typescript"
-                    defaultValue={file.csCode}
-                    className={'code-editor__container'}
-                  />
-                </div>
-                <div className="reprocess__container">
-                  {file.loading ? (
-                    <span className="loader"></span>
-                  ) : (
-                    <button
-                      onClick={() => handleReprocess(file.csCode, file.fileName)}
-                      className="btn--update"
-                    >
-                      Update <FaChevronRight />
-                    </button>
-                  )}
-                </div>
-                <div className="editor">
-                  <div className="title__container">
-                    <h3>{file.fileName.replace('.cs', '.tsx')}</h3>
+          files.map((file, index) => {
+            let newCsCode = '';
+            const handleEditorChange = (value: string) => {
+              newCsCode = value;
+            };
+
+            return (
+              <div key={index}>
+                <div className="editor__container">
+                  <div className="editor">
+                    <h3>{file.fileName}</h3>
+                    <Editor
+                      height="300px"
+                      defaultLanguage="typescript"
+                      defaultValue={file.csCode}
+                      className={'code-editor__container'}
+                      onChange={handleEditorChange}
+                    />
+                  </div>
+                  <div className="reprocess__container">
                     {file.loading ? (
                       <span className="loader"></span>
                     ) : (
-                      <div className="buttons__container">
-                        <button
-                          className="btn"
-                          title="Copy to clipboard"
-                          onClick={() => copyToClipboard(file.tsxCode)}
-                        >
-                          <AiOutlineCopy className="icon" />
-                        </button>
-                        <button
-                          className="btn"
-                          title="Download"
-                          onClick={() => downloadValueAsFile(file.tsxCode, `${file.fileName}.tsx`)}
-                        >
-                          <GrDocumentDownload className="icon" />
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => handleReprocess(newCsCode, file.fileName)}
+                        className="btn--update"
+                      >
+                        Update <FaChevronRight />
+                      </button>
                     )}
                   </div>
+                  <div className="editor">
+                    <div className="title__container">
+                      <h3>{file.fileName.replace('.cs', '.tsx')}</h3>
+                      {file.loading ? (
+                        <span className="loader"></span>
+                      ) : (
+                        <div className="buttons__container">
+                          <button
+                            className="btn"
+                            title="Copy to clipboard"
+                            onClick={() => copyToClipboard(file.tsxCode)}
+                          >
+                            <AiOutlineCopy className="icon" />
+                          </button>
+                          <button
+                            className="btn"
+                            title="Download"
+                            onClick={() =>
+                              downloadValueAsFile(file.tsxCode, `${file.fileName}.tsx`)
+                            }
+                          >
+                            <GrDocumentDownload className="icon" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
-                  <Editor
-                    height="300px"
-                    defaultLanguage="typescript"
-                    defaultValue={file.tsxCode}
-                    value={file.tsxCode}
-                    className={'code-editor__container'}
-                  />
+                    <Editor
+                      height="300px"
+                      defaultLanguage="typescript"
+                      defaultValue={file.tsxCode}
+                      value={file.tsxCode}
+                      onChange={(value: string) => {
+                        file.tsxCode = value;
+                      }}
+                      className={'code-editor__container'}
+                    />
+                  </div>
                 </div>
+                <hr className="hr" />
               </div>
-              <hr className="hr" />
-            </div>
-          ))}
+            );
+          })}
       </div>
     </>
   );

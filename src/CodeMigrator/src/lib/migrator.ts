@@ -34,7 +34,6 @@ const firstCall = async (csCode: string): Promise<string> => {
   try {
     const response = await axios.request(classNameOptions);
     className = response.data;
-    console.log(className);
 
     // take the value from prompts[1] and, where it says CODEHERE, replace it with the "csCode" variable
     const prompt = prompts[2].replace('CODEHERE', csCode);
@@ -86,7 +85,6 @@ const apiCall = async (options: AxiosRequestConfig, className: string): Promise<
     const classNameModel = className.replace('Model', '').replace('\n', ' ');
 
     prompt = prompt.replace('TYPENAME', classNameModel);
-    console.log(prompt);
 
     // transform prompt to base64
     const base64 = Buffer.from(prompt).toString('base64');
@@ -115,8 +113,6 @@ const apiCall = async (options: AxiosRequestConfig, className: string): Promise<
 
     // find ": React.FC" and replace it with " "
     responseData = responseData.replace(/: React.FC<AlertLabelsModel>/g, ' ');
-
-    console.log(responseData);
 
     return responseData;
   } catch (error) {
