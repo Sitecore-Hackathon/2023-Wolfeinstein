@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 
 import { AiOutlineCopy } from 'react-icons/ai';
 import Editor from '@monaco-editor/react';

@@ -39,44 +39,43 @@ export default async function handler(
       });
     });
 
-    console.log('formData', formData);
     const filesData = formData['files']['files'];
+
     if (Array.isArray(filesData)) {
-      filesData.forEach(async (file) => {
+      const promises = filesData.map(async (file) => {
         const path = file['filepath'];
         const originalFileName = file['originalFilename'];
         const rawData = fs.readFileSync(path);
-        // console.log(rawData.toString());
         const originalCode = rawData.toString();
         const componentCode = await handlePrompts(originalCode);
-        // return rawData.toString();
-        answer.files.push({
+
+        return {
           fileName: originalFileName,
           tsxCode: componentCode,
           csCode: originalCode,
-        });
-        console.log(answer);
+        };
       });
+
+      const results = await Promise.all(promises);
+      answer.files = results;
+
+      return res.status(200).json(answer);
     } else {
       const path = filesData['filepath'];
       const originalFileName = filesData['originalFilename'];
       const rawData = fs.readFileSync(path);
-      // console.log(rawData.toString());
       const originalCode = rawData.toString();
       const componentCode = await handlePrompts(originalCode);
-      console.log('componentCode', componentCode);
-      // return rawData.toString();
+
       answer.files.push({
         fileName: originalFileName,
         tsxCode: componentCode,
         csCode: originalCode,
       });
-      console.log(answer);
+      return res.status(200).json(answer);
     }
   } catch (e) {
     res.status(400).send(answer);
     return;
   }
-
-  return res.status(200).json(answer);
 }
